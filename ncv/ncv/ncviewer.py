@@ -17,20 +17,20 @@ def ensure_site_pkgs():
     """Apparently Inkscape has altered the path searched by the Python interpreter
        for modules to its own. I don't want to interfere with Inkscape, but I need
        to have the directory used by pip to install packages be available to the program.
-    
+
     """
-    
+
     # Ensure that the normal path has been archived by Jupyter.
     try:
         with open('pkl/path.pkl', 'rb') as f:
             p = pickle.load(f)
     except pickle.PickleError:
         print("Something went wrong loading the pickled path!")
-        
+
     p.extend(sys.path)
     sys.path = p
 
-ensure_site_pkgs()
+# ensure_site_pkgs()
 
 from anglr import Angle
 
