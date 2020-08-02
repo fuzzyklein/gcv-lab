@@ -1,0 +1,20 @@
+#! /usr/bin/env bash
+# Activate an associated virtual environment if one exists and run the program.
+cwd=`pwd`
+prog_name=${cwd##*/}
+venv=$HOME/projects/py38/venv/py38
+activ8=$venv/bin/activate
+
+if [ -e $activ8 ]
+then
+    source $activ8
+else
+    echo "venv does not exist"
+fi
+
+python3.8 -i -m $prog_name $@
+
+if [ -e $activ8 ]
+then
+    deactivate
+fi
