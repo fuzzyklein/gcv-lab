@@ -156,6 +156,10 @@ class NCViewer(Driver, Program):
         #     p.run()
 
     def is_valid_gcode(self, s):
+        try:
+            b = Block(s)
+        except ValueError:
+            return False
         return True
 
     def default(self, args):

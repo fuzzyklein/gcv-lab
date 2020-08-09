@@ -1,7 +1,10 @@
 from configparser import ConfigParser
 from enum import Enum
+from functools import reduce
 import logging
+from operator import and_
 from pathlib import Path
+import string
 import sys
 
 log = logging.getLogger(__name__)
@@ -35,6 +38,9 @@ class Word(object):
 
     def execute(self):
         return { self.cmd : self.param }
+
+    def validate(self):
+        return self.cmd in string.ascii_letters and type(self.param) in {int, float}
 
 
 
@@ -71,6 +77,8 @@ class Block(list):
                 self.remove(word)
         return result
 
+    def validate(self):
+        return reduce(and_, [w.validate() for w in self])
 
 
     def execute(self):
