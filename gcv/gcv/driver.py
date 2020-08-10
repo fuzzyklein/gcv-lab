@@ -20,8 +20,8 @@ log.setLevel(logging.WARNING)
 log.addHandler(logging.NullHandler())
 log.debug(f"loading {__name__} module")
 
-from ncv.constants import *
-from ncv.startup import *
+from constants import *
+from startup import *
 
 class Driver(Cmd):
     """ Define a base class for classes that initialize a program and define its
