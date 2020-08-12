@@ -115,12 +115,14 @@ class NCProgram(list):
         RUNNING = 2
         END = 3
 
-    def __init__(self, lines):
+    def __init__(self, lines=list()):
         super(list, self).__init__()
         if type(lines) is str:
             lines = lines.split(NEWLINE)
         for line in lines:
             self.append(Block(line))
+        self.current_block = 0
+        self._state = 0
 
     # def run(self):
     #     while self.state != self.State.END:
@@ -132,8 +134,18 @@ class NCProgram(list):
         if self.current_block >= len(self):
             self.state = self.State.END
         else:
-            return self[self.current_block].execute()
+            i = self.current_block
             self.current_block += 1
+            return self[i].execute()
+
+    @property
+    def state(self):
+        return self._state
+
+    @state.setter
+    def state(self, n):
+        self._state = n
+
 
 
 logging.debug(f"{__name__} module loaded")

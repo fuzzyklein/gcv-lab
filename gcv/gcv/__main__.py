@@ -38,7 +38,10 @@ if PARSER_ARGUMENTS:
 else:
     ARGS = None
 
+print(f"{ARGS=}")
+
 if ARGS: GLOBAL_OPTS = GLOBAL_OPTS.new_child(vars(ARGS))
+print(f"{GLOBAL_OPTS=}")
 DEBUG = GLOBAL_OPTS['debug']
 VERBOSE = GLOBAL_OPTS['verbose']
 PROGRAM = GLOBAL_OPTS['program']

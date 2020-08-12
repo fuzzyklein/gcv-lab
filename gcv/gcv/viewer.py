@@ -49,7 +49,7 @@ from environment import *
 from ncprogram import Block, NCProgram
 
 class Viewer(Driver, Program):
-    """ Print a friendly greeting for the world.
+    """ .
 
 
     """
@@ -57,6 +57,8 @@ class Viewer(Driver, Program):
         # self.settings = settings
         Program.__init__(self, settings)
         Driver.__init__(self, settings)
+        print("initializing viewer")
+        self.settings = settings
         if self.settings["verbose"]:
             print()
             print("Settings:")
@@ -71,6 +73,7 @@ class Viewer(Driver, Program):
         # self.ax.plot([0.0, 1.0], [0.2, 0.7], 0.4)
         self.current_position = Point()
         plt.show()
+        self.current_program = NCProgram()
 
     def code_group(self, n):
         for k in gCodeGroups.keys():
@@ -142,7 +145,20 @@ class Viewer(Driver, Program):
         self.cmdloop()
 
     def process_file(self, path):
-        self.programs.append(NCProgram(path.read_text().split('\n')))
+        """There should be at most one filename given on the command line.
+           Since we're processing a file, it has to have been on the command line,
+           and so this function has to have been called from `Program.init`.
+           `path` should be a Python 3.5+ `Path`, having been converted by
+           `Program.process_fname`.
+        """
+        # DEPRECATED
+        # self.programs.append(NCProgram(path.read_text().split('\n')))
+        VERBOSE = self.settings['verbose']
+        if VERBOSE:
+            print(f"processing file: {path=}")
+        with path.open() as f:
+            self.current_program.extend([Block(line) for line in f])
+
 
     def process_args(self):
         super().process_args()
@@ -166,10 +182,11 @@ class Viewer(Driver, Program):
         pass
 
 
-    def do_step(self):
+    def do_step(self, args):
         if self.current_program:
             self.env = self.env.new_child(self.current_program.step())
-            return self.move()
+            if self.current_program.state != NCProgram.State.END:
+                return self.move()
         else:
             print("ERROR: step: No program is loaded.")
             return False
@@ -375,7 +392,7 @@ class Viewer(Driver, Program):
             return Point(P0.x, xr, ry)
 
 
-    def do_run(self):
+    def do_run(self, args):
         while self.current_program.state != NCProgram.State.END and self.do_step():
             pass
 
