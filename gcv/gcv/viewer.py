@@ -3,8 +3,8 @@ from configparser import ConfigParser
 import logging
 from math import pi as PI
 import numpy
-import pickle
 from pathlib import Path
+import pickle
 from pprint import pformat
 import sys
 
@@ -18,6 +18,7 @@ def ensure_site_pkgs():
        for modules to its own. I don't want to interfere with Inkscape, but I need
        to have the directory used by pip to install packages be available to the program.
 
+       DEPRECATED because Inkscape's Python installation is optional.
     """
 
     # Ensure that the normal path has been archived by Jupyter.
@@ -186,7 +187,8 @@ class Viewer(Driver, Program):
         if self.current_program:
             self.env = self.env.new_child(self.current_program.step())
             if self.current_program.state != NCProgram.State.END:
-                return self.move()
+                if self.move():
+                    return False
         else:
             print("ERROR: step: No program is loaded.")
             return False
@@ -393,7 +395,7 @@ class Viewer(Driver, Program):
 
 
     def do_run(self, args):
-        while self.current_program.state != NCProgram.State.END and self.do_step():
+        while self.current_program.state != NCProgram.State.END and self.do_step(None):
             pass
 
 logging.debug(f"{__name__} module loaded")
