@@ -42,17 +42,11 @@ plt.ion()
 from sympy import *
 init_printing()
 
-CONFIG_FILE = 'etc/config.ini'
-CONFIG = ConfigParser()
-CONFIG.read(CONFIG_FILE)
-sys.path.insert(0, str(Path.home() / CONFIG["DEFAULT"]["packages_dir"]))
-print( str(Path.home() / CONFIG["DEFAULT"]["packages_dir"]))
+from gcv.driver import Driver
+from gcv.program import Program
 
-from ncv.driver import Driver
-from ncv.program import Program
-
-from ncv.environment import *
-from ncv.ncprogram import Block, NCProgram
+from gcv.environment import *
+from gcv.ncprogram import Block, NCProgram
 
 class NCViewer(Driver, Program):
     """ Print a friendly greeting for the world.
@@ -70,6 +64,7 @@ class NCViewer(Driver, Program):
             print(pformat([f"{k}: {v}" for k, v in settings.items()]).lstrip('[').rstrip(']'))
             print()
         self.env = Environment(DEFAULT_VARS)
+        self._gcode_dir = self.settings["gcode_dir"]
         # programs should be loaded from a directory located by a configuration file setting
         self.programs = list()
         self.fig = plt.figure()
@@ -77,6 +72,15 @@ class NCViewer(Driver, Program):
         # self.ax.plot([0.0, 1.0], [0.2, 0.7], 0.4)
         self.current_position = Point()
         plt.show()
+        self.current_program = None
+
+    @property
+    def gcode_dir(self):
+        return self._gcode_dir
+
+    @gcode_dir.setter
+    def gcode_dir(self, p):
+        self._gcode_dir = Path(p)
 
     def code_group(self, n):
         for k in gCodeGroups.keys():
@@ -126,9 +130,9 @@ class NCViewer(Driver, Program):
         if "O" in self.env.maps[-1]:
             self.load_program(self.env.maps[-1]["O"])
         self.move()
-        if blk.mCode():
-            pass
-            # process the `M` code
+        mCode = blk.mCode():
+        if mCode == 30:
+            self.current_program.reset()
 
     def load_program(self, n):
         """ Find the given number after 'O' and followed by an up-to-5-digit
@@ -139,13 +143,26 @@ class NCViewer(Driver, Program):
 
     def run(self):
         print("Running `ncview` ...")
-        if self.settings["verbose"]:
-            print(sys.version)
-        # self.get_input()
+        # if self.settings["verbose"]:
+        #     print(sys.version)
+        self.get_input()
         self.process_args()
 
 
         self.cmdloop()
+
+    def load(self, *args, **kwargs):
+        """
+
+            >>>i = 1
+            >>>f'data/gcode/{args[0]:5}.gcode'
+               'data/gcode/00001.gcode'
+
+        """
+        if args:
+            if type(args[0]) is int:
+                p = self.settings['basedir'].parent / f'data/gcode/{args[0]:5}.gcode'
+
 
     def process_file(self, path):
         self.programs.append(NCProgram(path.read_text().split('\n')))
@@ -165,7 +182,7 @@ class NCViewer(Driver, Program):
     def default(self, args):
         if self.is_valid_gcode(args): self.execute(Block(args))
         else:
-            super.default(args)
+            Driver.default(args)
         # self.ax.plot([1.0, 3.0], [0.2, 0.7], 0.4)
 
     def emptyline(self):
@@ -380,9 +397,14 @@ class NCViewer(Driver, Program):
         else:
             return Point(P0.x, xr, ry)
 
+    do_load(self, args):
+        load(args)
 
-    def do_run(self):
-        while self.current_program.state != NCProgram.State.END and self.do_step():
+    def do_run(self, args=None):
+        """Run the files given as arguments consecutively, or the current program
+           if no arguments are present.
+        """
+        while self.current_program.state != NCProgram.State.END and self.step():
             pass
 
 logging.debug(f"{__name__} module loaded")

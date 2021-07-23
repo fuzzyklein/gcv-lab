@@ -7,20 +7,6 @@ from pathlib import Path
 import string
 import sys
 
-log = logging.getLogger(__name__)
-log.setLevel(logging.WARNING)
-log.addHandler(logging.NullHandler())
-log.debug(f"loading {__name__} module")
-
-CONFIG_FILE = 'etc/config.ini'
-CONFIG = ConfigParser()
-CONFIG.read(CONFIG_FILE)
-sys.path.insert(0, str(Path.home() / CONFIG["DEFAULT"]["packages_dir"]))
-print( str(Path.home() / CONFIG["DEFAULT"]["packages_dir"]))
-
-from charconsts import *
-
-from enumerations import *
 
 class Word(object):
     """
@@ -58,6 +44,8 @@ class Block(list):
             for CODE in PRIORITY_LIST:
                 if word[0] == CODE:
                     self.append(Word(word))
+                    if not self[-1].validate():
+                        raise Exception(f"ERROR: Invalid command: {self[-1]}")
 
     def __repr__(self):
         """
@@ -121,26 +109,22 @@ class NCProgram(list):
             lines = lines.split(NEWLINE)
         for line in lines:
             self.append(Block(line))
-        self._current_block = 0
+        self.current_block = 0
         self._state = 0
 
     # def run(self):
     #     while self.state != self.State.END:
     #         self.step()
 
-    def reset(self):
-        self._current_block = 0
-        self._state = self.State.BEGIN
-
     def step(self):
         """
         """
-        value = self[current_block].execute()
-        self._current_block += 1
-        if self._current_block >= len(self):
+        if self.current_block >= len(self):
             self.state = self.State.END
         else:
-            return value
+            i = self.current_block
+            self.current_block += 1
+            return self[i].execute()
 
     @property
     def state(self):
@@ -152,9 +136,4 @@ class NCProgram(list):
 
 
 
-logging.debug(f"{__name__} module loaded")
 
-if __name__ == "__main__":
-    print(f"Testing {__file__}...")
-    import doctest
-    doctest.testmod(optionflags=doctest.ELLIPSIS)
